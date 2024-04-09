@@ -1,46 +1,91 @@
 <template>
-  <section
-    :style="`background: ${options.color}`"
-    @drop="onDrop($event, options.id)"
-    @dragover.prevent
-    @dragenter.prevent>
-    <div class="title">
-      <h2>
-        {{ options.title }}
-      </h2>
-      <div class="counter">
-        <span>{{ cards.length }}</span>
-      </div>
+  <div class="column">
+    <div class="sortControls">
+      <v-tooltip text="Сортировка по возрастанию">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            v-bind="props"
+            icon="mdi-sort-ascending"
+            density="compact"
+            variant="tonal"
+            class="sort-btn"
+            color="blue"
+            @click="sortList('Desc')" />
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Сортировка по убыванию">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            v-bind="props"
+            icon="mdi-sort-descending"
+            density="compact"
+            variant="tonal"
+            class="sort-btn"
+            color="blue"
+            @click="sortList('Asc')" />
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Сбросить сортировку">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            v-bind="props"
+            icon="mdi-sort-variant"
+            density="compact"
+            variant="tonal"
+            class="sort-btn"
+            color="blue"
+            @click="sortList('Default')" />
+        </template>
+      </v-tooltip>
     </div>
-    <v-btn
-      icon="mdi-plus"
-      variant="tonal"
-      class="mt-5"
-      color="white"
-      @click="isNewCardDialogOpen = true" />
+    
 
-    <CardItem
-      v-for="(card, index) in cards"
-      draggable="true"
-      :key="index"
-      :card="card"
-      :options="props.options"
-      @delete-card="deleteCard(card.id)"
-      @dragstart="onDragStart($event, card)" />
+    <section
+      :style="`background: ${options.color}`"
+      @drop="onDrop($event, options.id)"
+      @dragover.prevent
+      @dragenter.prevent>
+    
+      <div class="title">
+        <h2>
+          {{ options.title }}
+        </h2>
+        <div class="counter">
+          <span>{{ cards.length }}</span>
+        </div>
+      </div>
+      <v-btn
+        icon="mdi-plus"
+        variant="tonal"
+        class="mt-5"
+        color="white"
+        @click="isNewCardDialogOpen = true" />
 
-    <CardForm
-      title="Добавление новой карточки"
-      v-model="isNewCardDialogOpen"
-      :form="form"
-      @save-card="addCard"
-      @close-form="isNewCardDialogOpen = false" />
-  </section>
+      <CardItem
+        v-for="(card, index) in cards"
+        draggable="true"
+        :key="index"
+        :card="card"
+        :options="props.options"
+        @delete-card="deleteCard(card.id)"
+        @dragstart="onDragStart($event, card)" />
+
+      <CardForm
+        title="Добавление новой карточки"
+        v-model="isNewCardDialogOpen"
+        :form="form"
+        @save-card="addCard"
+        @close-form="isNewCardDialogOpen = false" />
+
+    </section>
+  </div>
 </template>
 
 <script setup>
   import { ref, inject } from 'vue';
   import CardItem from './CardItem.vue';
-  import CardForm from './CardForm.vue';
 
   const firstList = inject('firstList');
   const secondList = inject('secondList');
@@ -77,7 +122,26 @@
         break;
     }
   }
+
   getLocalCards();
+
+  const sortList = (sortBy) => {
+    switch (sortBy) {
+      case "Desc":
+        cards = cards.value.sort((a, b) => b.rating.rate - a.rating.rate);
+        break;
+
+      case "Asc":
+        cards = cards.value.sort((a, b) => a.rating.rate - b.rating.rate);
+        break;
+      
+      default:
+        // Понятия не имею, все передается "реактивно" по референсу из-за асинхронности.
+        cards = cards.value.sort((a, b) => a.id - b.id);
+        break;
+    }
+    getLocalCards();
+  }
 
   function addCard() {
     cards.value.unshift(form.value);
@@ -132,6 +196,17 @@
 </script>
 
 <style lang="scss" scoped>
+  .sortControls {
+    background: white;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    display: flex;
+    flex-direction: row;
+    padding: 0.5rem;
+    gap: 0.5rem;
+    place-content: center;
+  }
+
   section {
     padding: 10px;
     width: 400px;
